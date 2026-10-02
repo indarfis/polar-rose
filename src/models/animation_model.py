@@ -124,8 +124,95 @@ class PolarRose(Curve):
         return f"r = cos({k}·θ)"
 
 
+class MaurerRose(Curve):
+    """Роза Маурера: ломаная по 361 точке полярной розы r = sin(n·θ).
+
+    k-я вершина лежит на розе при угле θ_k = k·d градусов,
+    k = 0, 1, ..., 360. Соседние вершины соединяются отрезками,
+    поэтому параметр t здесь — целый номер вершины.
+    """
+
+    name = "Роза Маурера"
+    param_names = ("n", "d°")
+    param_ranges = ((1, 12), (1, 179))
+    defaults = (6, 71)
+    t_step = 1
+    is_polar = True
+
+    def period(self):
+        """Вернуть число отрезков ломаной (360)."""
+        return 360
+
+    def point(self, t):
+        """Вернуть вершину с номером t."""
+        theta = math.radians(t * self.p2)
+        r = math.sin(self.p1 * theta)
+        return r * math.cos(theta), r * math.sin(theta)
+
+    def formula(self):
+        """Вернуть формулу розы Маурера."""
+        return f"r = sin({self.p1}·θ),  θ = k·{self.p2}°"
+
+
+class Lissajous(Curve):
+    """Фигура Лиссажу: x = sin(a·t + π/2), y = sin(b·t)."""
+
+    name = "Фигура Лиссажу"
+    param_names = ("a", "b")
+    param_ranges = ((1, 10), (1, 10))
+    defaults = (3, 2)
+
+    def period(self):
+        """Синусы с целыми частотами повторяются через 2π."""
+        return 2 * math.pi
+
+    def point(self, t):
+        """Вернуть точку фигуры Лиссажу (уже лежит в [-1; 1])."""
+        return math.sin(self.p1 * t + math.pi / 2), math.sin(self.p2 * t)
+
+    def formula(self):
+        """Вернуть формулу фигуры Лиссажу."""
+        return f"x = sin({self.p1}t + π/2),  y = sin({self.p2}t)"
+
+
+class Hypotrochoid(Curve):
+    """Гипотрохоида (спирограф).
+
+    Окружность радиуса r катится внутри окружности радиуса R,
+    рисующая точка удалена от центра малой окружности на h = 0.8·r:
+        x = (R − r)·cos t + h·cos((R − r)/r · t)
+        y = (R − r)·sin t − h·sin((R − r)/r · t)
+    """
+
+    name = "Спирограф (гипотрохоида)"
+    param_names = ("R", "r")
+    param_ranges = ((2, 15), (1, 14))
+    defaults = (7, 4)
+    HOLE = 0.8
+
+    def period(self):
+        """Кривая замыкается, когда малая окружность сделает целое
+        число оборотов: t = 2π · r / НОД(R, r)."""
+        return 2 * math.pi * self.p2 / math.gcd(self.p1, self.p2)
+
+    def point(self, t):
+        """Вернуть точку гипотрохоиды, делённую на её макс. радиус."""
+        big, small = self.p1, self.p2
+        h = self.HOLE * small
+        diff = big - small
+        x = diff * math.cos(t) + h * math.cos(diff / small * t)
+        y = diff * math.sin(t) - h * math.sin(diff / small * t)
+        # Максимальное удаление от центра: |R − r| + h.
+        extent = abs(diff) + h
+        return x / extent, y / extent
+
+    def formula(self):
+        """Вернуть параметры спирографа."""
+        return f"R = {self.p1}, r = {self.p2}, h = {self.HOLE}·r"
+
+
 #: Все доступные кривые в порядке отображения в списке.
-CURVES = [PolarRose]
+CURVES = [PolarRose, MaurerRose, Lissajous, Hypotrochoid]
 
 
 def curve_by_name(name):
