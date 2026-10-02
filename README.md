@@ -85,7 +85,7 @@ y = r(θ) · sin θ
 
 ### 1. Клонирование репозитория
 ```bash
-git clone https://github.com/USERNAME/polar-rose.git
+git clone https://github.com/indarfis/polar-rose.git
 cd polar-rose
 ```
 
